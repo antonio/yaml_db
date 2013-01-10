@@ -60,8 +60,10 @@ module SerializationHelper
 
     def self.truncate_table(table)
       begin
+        puts "TRUNCATE #{SerializationHelper::Utils.quote_table(table)}"
         ActiveRecord::Base.connection.execute("TRUNCATE #{SerializationHelper::Utils.quote_table(table)}")
       rescue Exception
+        puts "DELETE FROM #{SerializationHelper::Utils.quote_table(table)}"
         ActiveRecord::Base.connection.execute("DELETE FROM #{SerializationHelper::Utils.quote_table(table)}")
       end
     end
@@ -84,6 +86,7 @@ module SerializationHelper
       quoted_table_name = SerializationHelper::Utils.quote_table(table)
       records.each do |record|
         quoted_values = record.zip(columns).map{|c| ActiveRecord::Base.connection.quote(c.first, c.last)}.join(',')
+        puts("INSERT INTO #{quoted_table_name} (#{quoted_column_names}) VALUES (#{quoted_values})")
         ActiveRecord::Base.connection.execute("INSERT INTO #{quoted_table_name} (#{quoted_column_names}) VALUES (#{quoted_values})")
       end
     end
@@ -158,7 +161,7 @@ module SerializationHelper
     end
 
     def self.tables
-      ActiveRecord::Base.connection.tables.reject { |table| ['schema_info', 'schema_migrations'].include?(table) }
+      ActiveRecord::Base.connection.tables
     end
 
     def self.dump_table(io, table)
@@ -189,6 +192,7 @@ module SerializationHelper
     end
 
     def self.table_record_count(table)
+      puts "SELECT COUNT(*) FROM #{SerializationHelper::Utils.quote_table(table)}"
       ActiveRecord::Base.connection.select_one("SELECT COUNT(*) FROM #{SerializationHelper::Utils.quote_table(table)}").values.first.to_i
     end
 
